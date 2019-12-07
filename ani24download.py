@@ -513,9 +513,7 @@ class AniDownThread(QThread):
         option.add_argument('--window-size=100x100')
         option.add_argument('--disable-gpu')
 
-        extensions_option = "--load-extension=" + os.getcwd() + "/files/Extensions/adBlock/3.6.3_0," + \
-                            os.getcwd() + "/files/Extensions/imageBlock/1.7.1_0," + \
-                            os.getcwd() + "/files/Extensions/imageBlock2/1.1_0,"
+        extensions_option = "--load-extension=" + os.getcwd() + "/files/Extensions/adBlock/3.6.3_0,"
         option.add_argument(extensions_option)
 
         # 비활성 상태에서는 적용도 안되고 실행도 안됨 망할
