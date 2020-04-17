@@ -243,7 +243,7 @@ class AniDownThread(QThread):
         m_dir = f.readline()
         f.close()
         # 저장 될 파일 이름
-        m_save = m_ani_name + ".mp4"
+        m_save = m_ani_name.replace("?","") + ".mp4"
         # 현재 몇편 중 몇번째인지
         m_all_progress = "(" + str(m_ani_all_all_count) + "편 중 " + str(m_ani_all_all_count2) + "편, " + \
                          str(m_all_episode) + "화 중 " + str(m_current_episode) + "화)"
@@ -285,7 +285,7 @@ class AniDownThread(QThread):
                     continue
 
                 # 폴더 생성
-                save_path = m_dir + "/" + m_ani_name_folder + "/" + m_ani_name_folder2 + "/" + m_ani_name_folder3
+                save_path = m_dir + "/" + m_ani_name_folder + "/" + m_ani_name_folder2 + "/" + m_ani_name_folder3.replace("?","")
                 if not os.path.exists(save_path):
                     os.makedirs(save_path)
 
