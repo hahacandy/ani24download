@@ -1,4 +1,6 @@
 import sys
+from builtins import print
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5 import uic
@@ -240,8 +242,8 @@ class AniDownThread(QThread):
                  m_ani_all_all_count, m_ani_all_all_count2, re_start=False):
                  
         # 제목에 물음표 잇으면 지움
-        m_ani_name_folder3 = m_ani_name_folder3.replace("?","")
-        m_ani_name = m_ani_name.replace("?","")
+        m_ani_name_folder3 = m_ani_name_folder3.replace("?", "")
+        m_ani_name = m_ani_name.replace("?", "")
         # 저장 경로 지정
         f = open('./files/aniSavePath.txt', 'r')
         m_dir = f.readline()
@@ -276,6 +278,7 @@ class AniDownThread(QThread):
         # 배열에 저장된 서버 목록을 가지고 다운로드 시도
         for idx, value in enumerate(server_list_array):
             url = str(value) + "id_" + str(m_ani_id) + ".mp4"
+            print(url)
             server_name = str(idx + 1) + "서버"
             self.download_server_signal.emit(server_name)
             self.download_info_signal.emit(m_all_progress + " " + m_ani_name + " 다운로드 시도 중")
@@ -283,7 +286,11 @@ class AniDownThread(QThread):
 
             try:
                 res = requests.head(url=url, verify=False, allow_redirects=True)
-                total_size = int(res.headers.get('content-length'))
+                try:
+                    total_size = int(res.headers.get('content-length'))
+                except:
+                    print(server_name + "서버에는 파일이 존재하지 않음")
+                    break
                 # 파일 용량 10메가 이상만 받음
                 if total_size < 10240000:
                     continue
@@ -308,59 +315,64 @@ class AniDownThread(QThread):
                 # 파일 저장
                 with open(save_path + "/" + m_save, "wb") as f:
                     r = requests.get(url, stream=True, verify=False, allow_redirects=True)
-                    total_size = int(r.headers.get('content-length'))
                     current_size = 0
                     last_time = 0
                     last_size = 0
                     speed = 0
-                    if total_size is not None:
+                    if r.status_code == 200:
+                        total_size = int(r.headers.get('content-length'))
+
                         self.download_info_signal.emit(m_all_progress + " " + m_ani_name + " 다운로드 중")
 
-                        for chunk in r.iter_content(1024):
-                            # 현재 파일 사이즈
-                            current_size += len(chunk)
+                        chunk_size = 128
+                        for chunk in r.iter_content(chunk_size):
 
                             # 파일 덧 붙여서 저장 중
                             f.write(chunk)
 
-                            # 1초 마다 정보 변경
-                            current_time = time.perf_counter()
-                            if last_time + 1 <= current_time:
-                                # 프로그래스 바 변경
-                                down_percent = math.floor(current_size / total_size * 100)
-                                if down_percent is not None:
+                            # 현재 파일 사이즈
+                            current_size += len(chunk)
+
+                            try:
+                                # 1초 마다 정보 변경
+                                current_time = time.perf_counter()
+                                if last_time + 1 <= current_time:
+                                    # 프로그래스 바 변경
+                                    down_percent = math.floor(current_size / total_size * 100)
                                     self.download_progress_signal.emit(down_percent)
 
-                                # 다운 속도 구함
-                                time_interval = current_time - last_time
-                                speed = round((current_size/1024-last_size/1024) / time_interval)
-                                last_size = current_size
-                                last_time = time.perf_counter()
+                                    # 다운 속도 구함
+                                    time_interval = current_time - last_time
+                                    speed = round((current_size/1024-last_size/1024) / time_interval)
+                                    last_size = current_size
+                                    last_time = time.perf_counter()
 
-                                # 속도
-                                self.download_speed_signal.emit(str(speed) + " Kb/s")
+                                    # 속도
+                                    self.download_speed_signal.emit(str(speed) + " Kb/s")
 
-                                # 전체 크기 / 현재 크기
-                                total_size_str = str(round(total_size / 1024 / 1024, 1)) + "MB"
-                                current_size_str = str(round(current_size / 1024 / 1024, 1)) + "MB"
-                                self.download_capacity_signal.emit(total_size_str + " 중 " + current_size_str)
+                                    # 전체 크기 / 현재 크기
+                                    total_size_str = str(round(total_size / 1024 / 1024, 1)) + "MB"
+                                    current_size_str = str(round(current_size / 1024 / 1024, 1)) + "MB"
+                                    self.download_capacity_signal.emit(total_size_str + " 중 " + current_size_str)
 
-                                # 남은 시간
-                                if speed > 0:
-                                    remain_time = math.ceil(((total_size / 1024) - (current_size / 1024)) / speed)
-                                    remain_hour = math.floor(remain_time / 60 / 60)
-                                    remain_min = math.floor((remain_time / 60) % 60)
-                                    remain_sec = math.floor(remain_time % 60)
-                                    if remain_hour != 0:
-                                        remain_time_str = str(remain_hour) + "시간 " + str(remain_min) + "분 " + \
-                                                          str(remain_sec) + "초 남음"
-                                    elif remain_min != 0:
-                                        remain_time_str = str(remain_min) + "분 " + str(remain_sec) + "초 남음"
+                                    # 남은 시간
+                                    if speed > 0:
+                                        remain_time = math.ceil(((total_size / 1024) - (current_size / 1024)) / speed)
+                                        remain_hour = math.floor(remain_time / 60 / 60)
+                                        remain_min = math.floor((remain_time / 60) % 60)
+                                        remain_sec = math.floor(remain_time % 60)
+                                        if remain_hour != 0:
+                                            remain_time_str = str(remain_hour) + "시간 " + str(remain_min) + "분 " + \
+                                                              str(remain_sec) + "초 남음"
+                                        elif remain_min != 0:
+                                            remain_time_str = str(remain_min) + "분 " + str(remain_sec) + "초 남음"
+                                        else:
+                                            remain_time_str = str(remain_sec) + "초 남음"
                                     else:
-                                        remain_time_str = str(remain_sec) + "초 남음"
-                                else:
-                                    remain_time_str = "알 수 없음"
-                                self.download_remain_time_signal.emit(remain_time_str)
+                                        remain_time_str = "알 수 없음"
+                                    self.download_remain_time_signal.emit(remain_time_str)
+                            except:
+                                pass
 
                         # 다운로드 다 했으니 다운로드 시도 빠져나옴
                         downloaded = True
