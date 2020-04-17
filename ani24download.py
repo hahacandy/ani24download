@@ -238,12 +238,16 @@ class AniDownThread(QThread):
     def ani_down(self, m_ani_id, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name,
                  m_all_episode, m_current_episode,
                  m_ani_all_all_count, m_ani_all_all_count2, re_start=False):
+                 
+        # 제목에 물음표 잇으면 지움
+        m_ani_name_folder3 = m_ani_name_folder3.replace("?","")
+        m_ani_name = m_ani_name.replace("?","")
         # 저장 경로 지정
         f = open('./files/aniSavePath.txt', 'r')
         m_dir = f.readline()
         f.close()
         # 저장 될 파일 이름
-        m_save = m_ani_name.replace("?","") + ".mp4"
+        m_save = m_ani_name + ".mp4"
         # 현재 몇편 중 몇번째인지
         m_all_progress = "(" + str(m_ani_all_all_count) + "편 중 " + str(m_ani_all_all_count2) + "편, " + \
                          str(m_all_episode) + "화 중 " + str(m_current_episode) + "화)"
@@ -324,7 +328,8 @@ class AniDownThread(QThread):
                             if last_time + 1 <= current_time:
                                 # 프로그래스 바 변경
                                 down_percent = math.floor(current_size / total_size * 100)
-                                self.download_progress_signal.emit(down_percent)
+                                if down_percent is not None:
+                                    self.download_progress_signal.emit(down_percent)
 
                                 # 다운 속도 구함
                                 time_interval = current_time - last_time
