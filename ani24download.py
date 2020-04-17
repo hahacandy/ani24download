@@ -164,13 +164,13 @@ class AniDownThread(QThread):
 
             try:
                 # 1화부터 끝화까지 id를 검색해 배열에 저장함
-                ani_story = driver.find_element_by_xpath("/html/body/div[7]/div[2]/div[2]").find_elements_by_tag_name(
+                ani_story = driver.find_element_by_class_name("ani_video_list").find_elements_by_tag_name(
                     "a")
                 ani_story.reverse()  # 마지막화 부터 담겨져 있어서 뒤집음
-                ani_name = str(driver.find_element_by_xpath("/html/body/div[6]/div[1]/h1").text)  # 해당 애니 이름 추출
+                ani_name = str(driver.find_element_by_class_name("ani_info_title_font_box").text)  # 해당 애니 이름 추출
 
                 # 애니 방영일 추출 하고 폴더 이름을 작성
-                ani_date = str(driver.find_element_by_xpath("/html/body/div[6]/div[2]/div[2]/div[12]/span[2]").text)
+                ani_date = str(driver.find_element_by_xpath("/html/body/div[7]/div[2]/div[2]/div[12]/span[2]").text)
 
             except Exception as err:
                 print("애니 방영일 추출 에러: " + str(err))
@@ -178,7 +178,7 @@ class AniDownThread(QThread):
             try:
                 # 방영일 추출 하지 못했을 경우, 1화의 업로드 날짜를 가져옴
                 if len(ani_date) < 3:
-                    ani_date = str(driver.find_element_by_xpath("/html/body/div[7]/div[2]/div[2]/a[" +
+                    ani_date = str(driver.find_element_by_xpath("/html/body/div[8]/div[2]/div[2]/a[" +
                                                                 str(len(ani_story)) + "]/div[2]/div[2]").text)
             except Exception as err:
                 print("애니 방영일 추출 에러: " + str(err))
@@ -205,6 +205,7 @@ class AniDownThread(QThread):
                 for idx2, ani in enumerate(ani_story):
                     # 애니 id 추출
                     ani_url = ani.get_attribute("href")
+                    print(ani_url)
                     regex = re.compile('[0-9]{3,5}')
                     ani_id = regex.search(ani_url).group()
                     if ani_id is None:
@@ -403,11 +404,11 @@ class AniDownThread(QThread):
 
             # 다운서버 주소 추출 미가공된 상태
             driver.get(url)
-            driver.find_element_by_xpath("/html/body/div[6]/div[2]").click()
+            driver.find_element_by_class_name("view_box_left").click()
             time.sleep(5)
             iframes = driver.find_elements_by_tag_name('iframe')
             driver.switch_to_frame(iframes[0])
-            server_url = str(driver.find_element_by_xpath("/html/body/div[2]/button[2]").get_attribute("data-link"))
+            server_url = str(driver.find_element_by_class_name("link_video").get_attribute("data-link"))
 
             driver.close()
 
