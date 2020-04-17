@@ -383,7 +383,7 @@ class AniDownThread(QThread):
                         self.download_capacity_signal.emit("비활성")
                         self.download_remain_time_signal.emit("비활성")
                         # avs 파일 작성
-                        self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
+                        # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
                         # 완료 로그 작성
                         self.down_log(m_dir, m_ani_name, 1, m_ani_name_folder, m_ani_name_folder2)
                         # 완료 print 로그 작성
