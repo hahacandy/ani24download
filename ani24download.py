@@ -330,10 +330,14 @@ class AniDownThread(QThread):
                             # 파일 덧 붙여서 저장 중
                             f.write(chunk)
 
-                            # 현재 파일 사이즈
                             current_size += len(chunk)
 
+                            print(current_size)
+
                             try:
+                                # 현재 파일 사이즈
+                                current_size += len(chunk)
+
                                 # 1초 마다 정보 변경
                                 current_time = time.perf_counter()
                                 if last_time + 1 <= current_time:
