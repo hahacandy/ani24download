@@ -282,10 +282,11 @@ class AniDownThread(QThread):
             try:
                 headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36'}
                 res = requests.head(url=url, verify=False, allow_redirects=True, headers=headers)
+                print(res.url)
                 try:
                     total_size = int(res.headers.get('content-length'))
                 except:
-                    print(server_name + "서버에는 파일이 존재하지 않음")
+                    print(server_name + "에는 파일이 존재하지 않음")
                     break
                 # 파일 용량 10메가 이상만 받음
                 if total_size < 10240000:
@@ -311,7 +312,19 @@ class AniDownThread(QThread):
 
                 # 파일 저장
                 with open(save_path + "/" + m_save, "wb") as f:
-                    r = requests.get(url, stream=True, verify=False, allow_redirects=True, headers=headers)
+                    host = url.replace("https://", "")
+                    host_find_index = host.find("com") + 3
+                    host = host[:host_find_index]
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',
+                        'Referer': res.url,
+                        'Sec-Fetch-Dest': 'video',
+                        'Sec-Fetch-Mode': 'no-cors',
+                        'Sec-Fetch-Site': 'same-origin',
+                        'Connection': 'keep-alive',
+                        'Host': host}
+                    cookies = {'good': '1'}
+                    r = requests.get(url=res.url, stream=True, verify=False, allow_redirects=True, headers=headers, cookies=cookies)
                     current_size = 0
                     last_time = 0
                     last_size = 0
@@ -321,8 +334,7 @@ class AniDownThread(QThread):
 
                         self.download_info_signal.emit(m_all_progress + " " + m_ani_name + " 다운로드 중")
 
-                        chunk_size = 128
-                        for chunk in r.iter_content(chunk_size):
+                        for chunk in r.iter_content(1024):
 
                             # 파일 덧 붙여서 저장 중
                             f.write(chunk)
@@ -368,20 +380,32 @@ class AniDownThread(QThread):
                                     remain_time_str = "알 수 없음"
                                 self.download_remain_time_signal.emit(remain_time_str)
 
-                        # 다운로드 다 했으니 다운로드 시도 빠져나옴
-                        downloaded = True
-                        self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
-                        self.download_progress_signal.emit(-1)
-                        self.download_server_signal.emit("비활성")
-                        self.download_speed_signal.emit("비활성")
-                        self.download_capacity_signal.emit("비활성")
-                        self.download_remain_time_signal.emit("비활성")
-                        # avs 파일 작성
-                        # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
-                        # 완료 로그 작성
-                        self.down_log(m_dir, m_ani_name, 1, m_ani_name_folder, m_ani_name_folder2)
-                        # 완료 print 로그 작성
-                        print(m_ani_name + " 다운로드 완료 (" + m_ani_name_folder + " " + m_ani_name_folder2)
+                        saved_ani_size = os.path.getsize(save_path + "/" + m_save)
+                        if saved_ani_size == total_size:
+                            # 다운로드 다 했으니 다운로드 시도 빠져나옴
+                            downloaded = True
+                            self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
+                            self.download_progress_signal.emit(-1)
+                            self.download_server_signal.emit("비활성")
+                            self.download_speed_signal.emit("비활성")
+                            self.download_capacity_signal.emit("비활성")
+                            self.download_remain_time_signal.emit("비활성")
+                            # avs 파일 작성
+                            # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
+                            # 완료 로그 작성
+                            self.down_log(m_dir, m_ani_name, 1, m_ani_name_folder, m_ani_name_folder2)
+                            # 완료 print 로그 작성
+                            print(m_ani_name + " 다운로드 완료 (" + m_ani_name_folder + " " + m_ani_name_folder2 + ")")
+                        else:
+                            self.download_info_signal.emit(m_ani_name + " 다운로드 실패")
+                            self.download_progress_signal.emit(-1)
+                            self.download_server_signal.emit("비활성")
+                            self.download_speed_signal.emit("비활성")
+                            self.download_capacity_signal.emit("비활성")
+                            self.download_remain_time_signal.emit("비활성")
+                            print(str(total_size) + "/" + str(saved_ani_size))
+                            print(m_ani_name + " 다운로드 실패 (" + m_ani_name_folder + " " + m_ani_name_folder2 + ")")
+
                         break
             except Exception as err:
                 print(err)
@@ -393,7 +417,7 @@ class AniDownThread(QThread):
                 if self.ani_down_re(m_ani_id):
                     self.ani_down(m_ani_id, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name,
                                   m_all_episode, m_current_episode,
-                                  m_ani_all_all_count, m_ani_all_all_count2, True)
+                                  m_ani_all_all_count, m_ani_all_all_count2, False)
                 else:
                     # 다운로드 실패 로그 작성
                     self.down_log(m_dir, m_ani_name, 2)
@@ -468,7 +492,6 @@ class AniDownThread(QThread):
 
         except Exception as err:
             print(err)
-            driver.close()
             return False
 
     # 다운 완료시 로그 작성
