@@ -324,7 +324,7 @@ class AniDownThread(QThread):
 
                         self.download_info_signal.emit(m_all_progress + " " + m_ani_name + " 다운로드 중")
 
-                        chunk_size = 128
+                        chunk_size = 1024
                         for chunk in r.iter_content(chunk_size):
 
                             # 파일 덧 붙여서 저장 중
@@ -332,52 +332,49 @@ class AniDownThread(QThread):
 
                             current_size += len(chunk)
 
-                            print(current_size)
+                            # 1초 마다 정보 변경
+                            current_time = time.perf_counter()
+                            if last_time + 1 <= current_time:
+                                # 프로그래스 바 변경
+                                down_percent = math.floor(current_size / total_size * 100)
+                                self.download_progress_signal.emit(down_percent)
 
-                            try:
+                                # 다운 속도 구함
+                                time_interval = current_time - last_time
+                                speed = round((current_size/1024-last_size/1024) / time_interval)
+                                last_size = current_size
+                                last_time = time.perf_counter()
 
-                                # 1초 마다 정보 변경
-                                current_time = time.perf_counter()
-                                if last_time + 1 <= current_time:
-                                    # 프로그래스 바 변경
-                                    down_percent = math.floor(current_size / total_size * 100)
-                                    self.download_progress_signal.emit(down_percent)
+                                # 속도
+                                self.download_speed_signal.emit(str(speed) + " Kb/s")
 
-                                    # 다운 속도 구함
-                                    time_interval = current_time - last_time
-                                    speed = round((current_size/1024-last_size/1024) / time_interval)
-                                    last_size = current_size
-                                    last_time = time.perf_counter()
+                                # 전체 크기 / 현재 크기
+                                total_size_str = str(round(total_size / 1024 / 1024, 1)) + "MB"
+                                current_size_str = str(round(current_size / 1024 / 1024, 1)) + "MB"
+                                self.download_capacity_signal.emit(total_size_str + " 중 " + current_size_str)
 
-                                    # 속도
-                                    self.download_speed_signal.emit(str(speed) + " Kb/s")
-
-                                    # 전체 크기 / 현재 크기
-                                    total_size_str = str(round(total_size / 1024 / 1024, 1)) + "MB"
-                                    current_size_str = str(round(current_size / 1024 / 1024, 1)) + "MB"
-                                    self.download_capacity_signal.emit(total_size_str + " 중 " + current_size_str)
-
-                                    # 남은 시간
-                                    if speed > 0:
-                                        remain_time = math.ceil(((total_size / 1024) - (current_size / 1024)) / speed)
-                                        remain_hour = math.floor(remain_time / 60 / 60)
-                                        remain_min = math.floor((remain_time / 60) % 60)
-                                        remain_sec = math.floor(remain_time % 60)
-                                        if remain_hour != 0:
-                                            remain_time_str = str(remain_hour) + "시간 " + str(remain_min) + "분 " + \
-                                                              str(remain_sec) + "초 남음"
-                                        elif remain_min != 0:
-                                            remain_time_str = str(remain_min) + "분 " + str(remain_sec) + "초 남음"
-                                        else:
-                                            remain_time_str = str(remain_sec) + "초 남음"
+                                # 남은 시간
+                                if speed > 0:
+                                    remain_time = math.ceil(((total_size / 1024) - (current_size / 1024)) / speed)
+                                    remain_hour = math.floor(remain_time / 60 / 60)
+                                    remain_min = math.floor((remain_time / 60) % 60)
+                                    remain_sec = math.floor(remain_time % 60)
+                                    if remain_hour != 0:
+                                        remain_time_str = str(remain_hour) + "시간 " + str(remain_min) + "분 " + \
+                                                          str(remain_sec) + "초 남음"
+                                    elif remain_min != 0:
+                                        remain_time_str = str(remain_min) + "분 " + str(remain_sec) + "초 남음"
                                     else:
-                                        remain_time_str = "알 수 없음"
-                                    self.download_remain_time_signal.emit(remain_time_str)
-                            except:
-                                pass
+                                        remain_time_str = str(remain_sec) + "초 남음"
+                                else:
+                                    remain_time_str = "알 수 없음"
+                                self.download_remain_time_signal.emit(remain_time_str)
+
+                                # 다운로드 하다가 다음으로 넘어가는 현상이 있어서 현재 받은 파일이 받아야할 파일과 동일하지 않으면 계속 다운로드 시도함
+                                if total_size == current_size:
+                                    downloaded = True
 
                         # 다운로드 다 했으니 다운로드 시도 빠져나옴
-                        downloaded = True
                         self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
                         self.download_progress_signal.emit(-1)
                         self.download_server_signal.emit("비활성")
@@ -401,7 +398,7 @@ class AniDownThread(QThread):
                 if self.ani_down_re(m_ani_id):
                     self.ani_down(m_ani_id, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name,
                                   m_all_episode, m_current_episode,
-                                  m_ani_all_all_count, m_ani_all_all_count2, True)
+                                  m_ani_all_all_count, m_ani_all_all_count2, False)
                 else:
                     # 다운로드 실패 로그 작성
                     self.down_log(m_dir, m_ani_name, 2)
@@ -426,7 +423,7 @@ class AniDownThread(QThread):
             driver.find_element_by_class_name("view_box_left").click()
             time.sleep(5)
             iframes = driver.find_elements_by_tag_name('iframe')
-            driver.switch_to_frame(iframes[0])
+            driver.switch_to.frame(iframes[0])
             server_url = str(driver.find_element_by_class_name("link_video").get_attribute("data-link"))
 
             driver.close()
