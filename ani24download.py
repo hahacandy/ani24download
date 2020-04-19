@@ -373,6 +373,7 @@ class AniDownThread(QThread):
                         # 다운로드 하다가 다음으로 넘어가는 현상이 있어서 현재 받은 파일이 받아야할 파일과 용량이 동일하지 않으면 계속 다운로드 시도함
                         saved_ani_size = os.path.getsize(save_path + "/" + m_save)
                         if saved_ani_size == total_size:
+                            downloaded = True
                             self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
                             # avs 파일 작성
                             # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
