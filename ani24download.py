@@ -11,6 +11,7 @@ import math
 import re
 import os
 from datetime import datetime
+from bs4 import BeautifulSoup    #BeautifulSoup import
 
 form_class = uic.loadUiType("ani24download.ui")[0]
 
@@ -151,41 +152,38 @@ class AniDownThread(QThread):
             self.download_info_signal.emit("(" + str(len(self.ani_list_url_array)) + "편 중 " + str(idx + 1) + "번째) " +
                                            self.ani_list_name_array[idx] + " 페이지 기다리는 중")
 
-            driver = ""
-            try:
-                driver = self.driver_set()
-                driver.get(url)
-            except Exception as err:
-                print("해당 애니 접속 에러: " + str(err))
-
             ani_story_id_array = []
             ani_story_name_array = []
             ani_date = ""
-            ani_story = ""
+            ani_story = []
             ani_name = ""
 
             try:
                 # 1화부터 끝화까지 id를 검색해 배열에 저장함
-                ani_story = driver.find_element_by_class_name("ani_video_list").find_elements_by_tag_name(
-                    "a")
+                response = requests.get(url)
+                html = response.text
+                soup = BeautifulSoup(html, 'html.parser')
+
+                ani_story = []
+                li = soup.find_all('a', href=True)
+                for a in li:
+                    children = a['href']
+                    if 'ani_view' in children:
+                        # print(a['href'])
+                        ani_story.append(a['href'])
+
+                ani_name = soup.find("h1", {"class": "ani_info_title_font_box"}).text
+
+                try:
+                    ani_date = soup.select("div.ani_info_right_box > div:nth-child(12) > span.block_right")[0].text
+                except:
+                    ani_dates = soup.find_all("div", {"class": "date"})
+                    ani_dates.reverse()
+                    ani_date = ani_dates[0].text
+
                 ani_story.reverse()  # 마지막화 부터 담겨져 있어서 뒤집음
-                ani_name = str(driver.find_element_by_class_name("ani_info_title_font_box").text)  # 해당 애니 이름 추출
-
-                # 애니 방영일 추출 하고 폴더 이름을 작성
-                ani_date = str(driver.find_element_by_xpath("/html/body/div[7]/div[2]/div[2]/div[12]/span[2]").text)
-
             except Exception as err:
-                print("애니 방영일 추출 에러: " + str(err))
-
-            try:
-                # 방영일 추출 하지 못했을 경우, 1화의 업로드 날짜를 가져옴
-                if len(ani_date) < 3:
-                    ani_date = str(driver.find_element_by_xpath("/html/body/div[8]/div[2]/div[2]/a[" +
-                                                                str(len(ani_story)) + "]/div[2]/div[2]").text)
-            except Exception as err:
-                print("애니 방영일 추출 에러: " + str(err))
-                driver.close()
-                return
+                print("애니 에피소드 주소 추출 에러: " + str(err))
 
             # 애니 출시일자를 저장폴더이름으로 사용하기 위해 가공
             ani_date_year = ani_date[0:4] + "년도"
@@ -206,24 +204,21 @@ class AniDownThread(QThread):
                 # driver 연동된 배열을 물리적배열에 변환시킴 (driver.close()가 되어도 되게끔)
                 for idx2, ani in enumerate(ani_story):
                     # 애니 id 추출
-                    ani_url = ani.get_attribute("href")
-                    print(ani_url)
+                    print(ani)
                     regex = re.compile('[0-9]{3,5}')
-                    ani_id = regex.search(ani_url).group()
+                    ani_id = regex.search(ani).group()
                     if ani_id is None:
                         print("id 추출 실패")
                         continue
 
                     # 애니 몇화인지 추출
-                    ani_story_name = ani.find_element_by_class_name("subject").text
+                    ani_story_name = ani_name + " " + str(idx2+1) + "화"
 
                     ani_story_id_array.append(ani_id)
                     ani_story_name_array.append(ani_story_name)
             except Exception as err:
                 print("애니 리스트 추출 에러: " + str(err))
                 return
-
-            driver.close()
 
             # 배열에 저장된 애니를 다운 받음
             for idx2, ani_id in enumerate(ani_story_id_array):
@@ -240,7 +235,7 @@ class AniDownThread(QThread):
     def ani_down(self, m_ani_id, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name,
                  m_all_episode, m_current_episode,
                  m_ani_all_all_count, m_ani_all_all_count2, re_start=False):
-                 
+
         # 제목에 물음표 잇으면 지움
         m_ani_name_folder3 = m_ani_name_folder3.replace("?", "")
         m_ani_name = m_ani_name.replace("?", "")
@@ -285,7 +280,8 @@ class AniDownThread(QThread):
             print(server_name + " " + m_ani_name + " 다운로드 시도 중")
 
             try:
-                res = requests.head(url=url, verify=False, allow_redirects=True)
+                headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36'}
+                res = requests.head(url=url, verify=False, allow_redirects=True, headers=headers)
                 try:
                     total_size = int(res.headers.get('content-length'))
                 except:
@@ -296,7 +292,8 @@ class AniDownThread(QThread):
                     continue
 
                 # 폴더 생성
-                save_path = m_dir + "/" + m_ani_name_folder + "/" + m_ani_name_folder2 + "/" + m_ani_name_folder3.replace("?","")
+                save_path = m_dir + "/" + m_ani_name_folder + "/" + m_ani_name_folder2 + "/" + m_ani_name_folder3.replace(
+                    "?", "")
                 if not os.path.exists(save_path):
                     os.makedirs(save_path)
 
@@ -314,7 +311,7 @@ class AniDownThread(QThread):
 
                 # 파일 저장
                 with open(save_path + "/" + m_save, "wb") as f:
-                    r = requests.get(url, stream=True, verify=False, allow_redirects=True)
+                    r = requests.get(url, stream=True, verify=False, allow_redirects=True, headers=headers)
                     current_size = 0
                     last_time = 0
                     last_size = 0
@@ -324,12 +321,13 @@ class AniDownThread(QThread):
 
                         self.download_info_signal.emit(m_all_progress + " " + m_ani_name + " 다운로드 중")
 
-                        chunk_size = 1024
+                        chunk_size = 128
                         for chunk in r.iter_content(chunk_size):
 
                             # 파일 덧 붙여서 저장 중
                             f.write(chunk)
 
+                            # 현재 파일 사이즈
                             current_size += len(chunk)
 
                             # 1초 마다 정보 변경
@@ -341,7 +339,7 @@ class AniDownThread(QThread):
 
                                 # 다운 속도 구함
                                 time_interval = current_time - last_time
-                                speed = round((current_size/1024-last_size/1024) / time_interval)
+                                speed = round((current_size / 1024 - last_size / 1024) / time_interval)
                                 last_size = current_size
                                 last_time = time.perf_counter()
 
@@ -370,26 +368,20 @@ class AniDownThread(QThread):
                                     remain_time_str = "알 수 없음"
                                 self.download_remain_time_signal.emit(remain_time_str)
 
-                        # 다운로드 하다가 다음으로 넘어가는 현상이 있어서 현재 받은 파일이 받아야할 파일과 용량이 동일하지 않으면 계속 다운로드 시도함
-                        saved_ani_size = os.path.getsize(save_path + "/" + m_save)
-                        if saved_ani_size == total_size:
-                            downloaded = True
-                            self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
-                            # avs 파일 작성
-                            # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
-                            # 완료 로그 작성
-                            self.down_log(m_dir, m_ani_name, 1, m_ani_name_folder, m_ani_name_folder2)
-                            # 완료 print 로그 작성
-                            print(m_ani_name + " 다운로드 완료 (" + m_ani_name_folder + " " + m_ani_name_folder2)
-
+                        # 다운로드 다 했으니 다운로드 시도 빠져나옴
+                        downloaded = True
                         self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
                         self.download_progress_signal.emit(-1)
                         self.download_server_signal.emit("비활성")
                         self.download_speed_signal.emit("비활성")
                         self.download_capacity_signal.emit("비활성")
                         self.download_remain_time_signal.emit("비활성")
-
-                        # 다운로드 다 했으니 다운로드 시도 빠져나옴
+                        # avs 파일 작성
+                        # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
+                        # 완료 로그 작성
+                        self.down_log(m_dir, m_ani_name, 1, m_ani_name_folder, m_ani_name_folder2)
+                        # 완료 print 로그 작성
+                        print(m_ani_name + " 다운로드 완료 (" + m_ani_name_folder + " " + m_ani_name_folder2)
                         break
             except Exception as err:
                 print(err)
@@ -401,7 +393,7 @@ class AniDownThread(QThread):
                 if self.ani_down_re(m_ani_id):
                     self.ani_down(m_ani_id, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name,
                                   m_all_episode, m_current_episode,
-                                  m_ani_all_all_count, m_ani_all_all_count2, False)
+                                  m_ani_all_all_count, m_ani_all_all_count2, True)
                 else:
                     # 다운로드 실패 로그 작성
                     self.down_log(m_dir, m_ani_name, 2)
@@ -425,6 +417,7 @@ class AniDownThread(QThread):
             driver.get(url)
             driver.find_element_by_class_name("view_box_left").click()
             time.sleep(5)
+            driver.switch_to.window(driver.window_handles[0])
             iframes = driver.find_elements_by_tag_name('iframe')
             driver.switch_to.frame(iframes[0])
             server_url = str(driver.find_element_by_class_name("link_video").get_attribute("data-link"))
@@ -439,7 +432,7 @@ class AniDownThread(QThread):
                 f.write("\n" + server_url)
                 f.close()
                 print("다운서버 추가 완료")
-                
+
             # 다운서버 중복 제거
             ani_down_server_array = []
             f = open('./files/aniDownServers.txt', 'r')
@@ -548,7 +541,6 @@ class AniDownThread(QThread):
         return driver
 
 
-
 class WindowClass(QMainWindow, form_class):
     def __init__(self):
         super().__init__()
@@ -627,8 +619,6 @@ class WindowClass(QMainWindow, form_class):
         self.aniIdInfo.setEnabled(True)
         self.aniIdInput.setEnabled(True)
         self.set_info_value("시작 버튼을 눌러주세요.")
-
-
 
     # 애니 노다운 txt 열게 해줌
     def ani_no_down_set(self):
