@@ -404,25 +404,25 @@ class AniDownThread(QThread):
 
     # 애니가 다운이 안됐을떄, 다운서버 주소 추가하고 성공, 실패 리턴함
     def ani_down_re(self, _m_ani_id):
-        driver = ""
         try:
-            driver = self.driver_set()
             # 애니24주소를 가져옴
             f = open('./files/ani24url.txt', 'r')
             ani24url = f.readline()
             f.close()
-            url = ani24url + "ani_view/" + _m_ani_id + ".html"
 
             # 다운서버 주소 추출 미가공된 상태
-            driver.get(url)
-            driver.find_element_by_class_name("view_box_left").click()
-            time.sleep(5)
-            driver.switch_to.window(driver.window_handles[0])
-            iframes = driver.find_elements_by_tag_name('iframe')
-            driver.switch_to.frame(iframes[0])
-            server_url = str(driver.find_element_by_class_name("link_video").get_attribute("data-link"))
-
-            driver.close()
+            url = "https://fileiframe.com/ani_video4/"+_m_ani_id+".html?player="
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',
+                'referer': 'https://'+ani24url+'/ani_view/'+_m_ani_id+'.html'}
+            cookies = {'player': 'video_player', 'PHPSESSID': 'vm2tn0m79csnl6fqvf10d8e0h7'}
+            response = requests.get(url=url, headers=headers, cookies=cookies)
+            html = response.text
+            soup = BeautifulSoup(html, 'html.parser')
+            try:
+                server_url = soup.find("button", {"class": "link_video"})['data-link']
+            except:
+                server_url = soup.find('source')['src']
 
             # 다운서버 주소 가공
             server_url = server_url.replace("id_" + _m_ani_id + ".mp4", "")
