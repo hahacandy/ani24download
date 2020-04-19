@@ -469,7 +469,6 @@ class AniDownThread(QThread):
                     ani_down_server_array.append(line.replace("\n", ""))
             f.close()
             ani_down_server_array = list(set(ani_down_server_array))
-            ani_down_server_array.reverse()
 
             # 다운 서버 txt 삭제
             os.remove('./files/aniDownServers.txt')
