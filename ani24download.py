@@ -382,31 +382,21 @@ class AniDownThread(QThread):
                                     remain_time_str = "알 수 없음"
                                 self.download_remain_time_signal.emit(remain_time_str)
 
-                        saved_ani_size = os.path.getsize(save_path + "/" + m_save)
-                        if saved_ani_size == total_size:
-                            # 다운로드 다 했으니 다운로드 시도 빠져나옴
-                            downloaded = True
-                            self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
-                            self.download_progress_signal.emit(-1)
-                            self.download_server_signal.emit("비활성")
-                            self.download_speed_signal.emit("비활성")
-                            self.download_capacity_signal.emit("비활성")
-                            self.download_remain_time_signal.emit("비활성")
-                            # avs 파일 작성
-                            # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
-                            # 완료 로그 작성
-                            self.down_log(m_dir, m_ani_name, 1, m_ani_name_folder, m_ani_name_folder2)
-                            # 완료 print 로그 작성
-                            print(m_ani_name + " 다운로드 완료 (" + m_ani_name_folder + " " + m_ani_name_folder2 + ")")
-                        else:
-                            self.download_info_signal.emit(m_ani_name + " 다운로드 실패")
-                            self.download_progress_signal.emit(-1)
-                            self.download_server_signal.emit("비활성")
-                            self.download_speed_signal.emit("비활성")
-                            self.download_capacity_signal.emit("비활성")
-                            self.download_remain_time_signal.emit("비활성")
-                            print(str(total_size) + "/" + str(saved_ani_size))
-                            print(m_ani_name + " 다운로드 실패 (" + m_ani_name_folder + " " + m_ani_name_folder2 + ")")
+
+                        # 다운로드 다 했으니 다운로드 시도 빠져나옴
+                        downloaded = True
+                        self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
+                        self.download_progress_signal.emit(-1)
+                        self.download_server_signal.emit("비활성")
+                        self.download_speed_signal.emit("비활성")
+                        self.download_capacity_signal.emit("비활성")
+                        self.download_remain_time_signal.emit("비활성")
+                        # avs 파일 작성
+                        # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
+                        # 완료 로그 작성
+                        self.down_log(m_dir, m_ani_name, 1, m_ani_name_folder, m_ani_name_folder2)
+                        # 완료 print 로그 작성
+                        print(m_ani_name + " 다운로드 완료 (" + m_ani_name_folder + " " + m_ani_name_folder2 + ")")
 
                         break
             except Exception as err:
