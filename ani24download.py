@@ -174,9 +174,11 @@ class AniDownThread(QThread):
 
                 ani_name = soup.find("h1", {"class": "ani_info_title_font_box"}).text
 
+                # 애니 방영일 추출
                 try:
                     ani_date = soup.select("div.ani_info_right_box > div:nth-child(12) > span.block_right")[0].text
                 except:
+                    # 일반적인 애니 방영일 추출이 불가능하다면 1화의 등록일을 추출
                     ani_dates = soup.find_all("div", {"class": "date"})
                     ani_dates.reverse()
                     ani_date = ani_dates[0].text
@@ -455,7 +457,6 @@ class AniDownThread(QThread):
                 f = open('./files/aniDownServers.txt', 'a')
                 f.write("\n" + server_url)
                 f.close()
-                print("다운서버 추가 완료")
 
             # 다운서버 중복 제거
             ani_down_server_array = []
@@ -465,14 +466,13 @@ class AniDownThread(QThread):
                 if not line:
                     break
                 if len(line) > 5:
-                    ani_down_server_array.append(line)
+                    ani_down_server_array.append(line.replace("\n", ""))
             f.close()
-
-            # 배열 중복 제거
             ani_down_server_array = list(set(ani_down_server_array))
+            ani_down_server_array.reverse()
 
-            # 다운 서버 txt 재생성시 오류 대비 백업 생성
-            os.rename('./files/aniDownServers.txt', './files/aniDownServers_bak.txt')
+            # 다운 서버 txt 삭제
+            os.remove('./files/aniDownServers.txt')
 
             # 다운 서버 txt 재생성
             f = open('./files/aniDownServers.txt', 'a')
@@ -483,10 +483,6 @@ class AniDownThread(QThread):
                 else:
                     f.write("\n" + value)
             f.close()
-
-            # 다운 서버 txt 완료했으니 bak파일 삭제
-            os.remove('./files/aniDownServers_bak.txt')
-            print("다운서버 중복 제거 완료")
 
             return True
 
