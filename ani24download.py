@@ -445,7 +445,7 @@ class AniDownThread(QThread):
             if len(server_url) > 5:
                 # 다운서버 주소 추가
                 f = open('./files/aniDownServers.txt', 'w')
-                f.write("\n" + server_url)
+                f.write(server_url)
                 f.close()
 
             return True
