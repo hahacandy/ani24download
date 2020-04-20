@@ -562,10 +562,7 @@ class WindowClass(QMainWindow, form_class):
         self.aniCapacity.hide()
         self.aniRemainTime.hide()
         # 버튼 이랑 함수랑 연결
-        self.startBtn.clicked.connect(self.btn_start)
         self.startAniIdBtn.clicked.connect(self.btn_start_ani_id)
-        self.avsResetBtn.clicked.connect(self.avs_reset)
-        self.aniNoDownBtn.clicked.connect(self.ani_no_down_set)
 
     # 애니 메인페이지 전부 다운로드
     def btn_start(self):
@@ -605,10 +602,7 @@ class WindowClass(QMainWindow, form_class):
         self.ani_down_thread.download_capacity_signal.connect(self.set_capacity_value)
         self.ani_down_thread.download_remain_time_signal.connect(self.set_remain_value)
         self.ani_down_thread.download_exit_set_signal.connect(self.q_exit_set)
-        # 시작 버튼 숨기기
-        self.startBtnLabel.hide()
-        self.startBtn.hide()
-        self.startAniIdBtn.hide()
+
         # 정보창 감추기 또는 비활성화
         if mode == 1:
             self.aniIdInfo.hide()
@@ -621,9 +615,6 @@ class WindowClass(QMainWindow, form_class):
 
     # 다운로드 끝나면 다시 버튼, 정보창 살아나게 함
     def q_exit_set(self):
-        self.startBtnLabel.show()
-        self.startBtn.show()
-        self.startAniIdBtn.show()
         self.aniIdInfo.setEnabled(True)
         self.aniIdInput.setEnabled(True)
         self.set_info_value("시작 버튼을 눌러주세요.")
