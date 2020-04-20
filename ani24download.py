@@ -444,34 +444,9 @@ class AniDownThread(QThread):
             server_url = server_url.replace("id_" + _m_ani_id + ".mp4", "")
             if len(server_url) > 5:
                 # 다운서버 주소 추가
-                f = open('./files/aniDownServers.txt', 'a')
+                f = open('./files/aniDownServers.txt', 'w')
                 f.write("\n" + server_url)
                 f.close()
-
-            # 다운서버 중복 제거
-            ani_down_server_array = []
-            f = open('./files/aniDownServers.txt', 'r')
-            while True:
-                line = f.readline()
-                if not line:
-                    break
-                if len(line) > 5:
-                    ani_down_server_array.append(line.replace("\n", ""))
-            f.close()
-            ani_down_server_array = list(set(ani_down_server_array))
-
-            # 다운 서버 txt 삭제
-            os.remove('./files/aniDownServers.txt')
-
-            # 다운 서버 txt 재생성
-            f = open('./files/aniDownServers.txt', 'a')
-            for idx, value in enumerate(ani_down_server_array):
-                value = value.replace("\n", "")
-                if idx == 0:
-                    f.write(value)
-                else:
-                    f.write("\n" + value)
-            f.close()
 
             return True
 
