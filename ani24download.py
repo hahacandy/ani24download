@@ -384,19 +384,19 @@ class AniDownThread(QThread):
 
 
                         # 다운로드 다 했으니 다운로드 시도 빠져나옴
-                        downloaded = True
-                        self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
+                        # downloaded = True
+                        # self.download_info_signal.emit(m_ani_name + " 다운로드 완료")
                         self.download_progress_signal.emit(-1)
                         self.download_server_signal.emit("비활성")
                         self.download_speed_signal.emit("비활성")
                         self.download_capacity_signal.emit("비활성")
                         self.download_remain_time_signal.emit("비활성")
-                        # avs 파일 작성
-                        # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
-                        # 완료 로그 작성
-                        self.down_log(m_dir, m_ani_name, 1, m_ani_name_folder, m_ani_name_folder2)
-                        # 완료 print 로그 작성
-                        print(m_ani_name + " 다운로드 완료 (" + m_ani_name_folder + " " + m_ani_name_folder2 + ")")
+                        # # avs 파일 작성
+                        # # self.create_avs(m_dir, m_ani_name_folder, m_ani_name_folder2, m_ani_name_folder3, m_ani_name)
+                        # # 완료 로그 작성
+                        # self.down_log(m_dir, m_ani_name, 1, m_ani_name_folder, m_ani_name_folder2)
+                        # # 완료 print 로그 작성
+                        # print(m_ani_name + " 다운로드 완료 (" + m_ani_name_folder + " " + m_ani_name_folder2 + ")")
 
                         break
             except Exception as err:
