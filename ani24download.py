@@ -165,12 +165,14 @@ class AniDownThread(QThread):
                 soup = BeautifulSoup(html, 'html.parser')
 
                 ani_story = []
+                ani_story_name_array = []
                 li = soup.find_all('a', href=True)
                 for a in li:
                     children = a['href']
                     if 'ani_view' in children:
-                        # print(a['href'])
+                        print(a)
                         ani_story.append(a['href'])
+                        ani_story_name_array.append(a.find('div', {'class' : 'subject'}).text)
 
                 ani_name = soup.find("h1", {"class": "ani_info_title_font_box"}).text
 
@@ -184,6 +186,7 @@ class AniDownThread(QThread):
                     ani_date = ani_dates[0].text
 
                 ani_story.reverse()  # 마지막화 부터 담겨져 있어서 뒤집음
+                ani_story_name_array.reverse()  # 마지막화 부터 담겨져 있어서 뒤집음
             except Exception as err:
                 print("애니 에피소드 주소 추출 에러: " + str(err))
 
@@ -213,11 +216,8 @@ class AniDownThread(QThread):
                         print("id 추출 실패")
                         continue
 
-                    # 애니 몇화인지 추출
-                    ani_story_name = ani_name + " " + str(idx2+1) + "화"
-
                     ani_story_id_array.append(ani_id)
-                    ani_story_name_array.append(ani_story_name)
+
             except Exception as err:
                 print("애니 리스트 추출 에러: " + str(err))
                 return
@@ -427,6 +427,7 @@ class AniDownThread(QThread):
             f.close()
 
             # 다운서버 주소 추출 미가공된 상태
+
             url = "https://fileiframe.com/ani_video4/"+_m_ani_id+".html?player="
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',
