@@ -175,6 +175,7 @@ class AniDownThread(QThread):
                         ani_story_name_array.append(a.find('div', {'class' : 'subject'}).text)
 
                 ani_name = soup.find("h1", {"class": "ani_info_title_font_box"}).text
+                ani_name = str(ani_name).strip()
 
                 # 애니 방영일 추출
                 try:
@@ -318,15 +319,20 @@ class AniDownThread(QThread):
                     host_find_index = host.find("com") + 3
                     host = host[:host_find_index]
                     headers = {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
                         'Referer': res.url,
                         'Sec-Fetch-Dest': 'video',
                         'Sec-Fetch-Mode': 'no-cors',
                         'Sec-Fetch-Site': 'same-origin',
                         'Connection': 'keep-alive',
                         'Host': host}
-                    cookies = {'good': '1'}
-                    r = requests.get(url=res.url, stream=True, verify=False, allow_redirects=True, headers=headers, cookies=cookies)
+                    cookies = {
+                        'good': '1',
+                        '_ga': 'GA1.2.121164403.1589034084',
+                        '_gid': 'GA1.2.646478837.1589034084',
+                        '_gat': '1'}
+                    session = requests.Session()
+                    r = session.get(url=res.url, stream=True, verify=False, allow_redirects=True, headers=headers, cookies=cookies)
                     current_size = 0
                     last_time = 0
                     last_size = 0
